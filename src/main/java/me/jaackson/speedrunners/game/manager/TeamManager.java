@@ -28,20 +28,26 @@ public class TeamManager {
     }
 
     public enum Team implements IStringSerializable {
-        DEAD("dead", TextFormatting.GRAY),
-        RUNNER("runner", TextFormatting.AQUA),
-        HUNTER("hunter", TextFormatting.RED);
+        DEAD("dead", "Dead", TextFormatting.GRAY),
+        RUNNER("runner", "Runner", TextFormatting.AQUA),
+        HUNTER("hunter", "Hunter", TextFormatting.RED);
 
         private final String id;
+        private final String name;
         private final TextFormatting color;
 
-        Team(String id, TextFormatting color) {
+        Team(String id, String name, TextFormatting color) {
             this.id = id;
+            this.name = name;
             this.color = color;
         }
 
         @Override
         public String getString() {
+            return id;
+        }
+
+        public String getName() {
             return id;
         }
 
