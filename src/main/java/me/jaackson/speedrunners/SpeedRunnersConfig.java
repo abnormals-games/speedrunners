@@ -17,6 +17,7 @@ public class SpeedRunnersConfig {
     }
 
     public ForgeConfigSpec.BooleanValue enabled;
+    public ForgeConfigSpec.IntValue startingBorderRadius;
 
     private SpeedRunnersConfig(ForgeConfigSpec.Builder builder) {
         builder.comment("SpeedRunners Server Config");
@@ -25,6 +26,11 @@ public class SpeedRunnersConfig {
                 .comment("Whether or not SpeedRunners is enabled.")
                 .translation("config." + SpeedRunners.MOD_ID + ".enabled")
                 .define("enabled", true);
+        this.startingBorderRadius = builder
+                .worldRestart()
+                .comment("The radius of the beginning game world border")
+                .translation("config." + SpeedRunners.MOD_ID + ".enabled")
+                .defineInRange("startingBorderRadius", 11, 1, 29999984);
     }
 
     public static void init(ModLoadingContext context) {

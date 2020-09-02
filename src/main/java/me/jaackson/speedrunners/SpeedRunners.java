@@ -1,19 +1,18 @@
 package me.jaackson.speedrunners;
 
-import com.mojang.brigadier.CommandDispatcher;
-import me.jaackson.speedrunners.game.command.SpeedRunnersCommand;
-import me.jaackson.speedrunners.game.manager.TeamManager;
-import net.minecraft.command.CommandSource;
+import me.jaackson.speedrunners.game.manager.ScoreboardManager;
+import me.jaackson.speedrunners.game.manager.team.TeamManager;
+import me.jaackson.speedrunners.game.util.GameHelper;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.SharedConstants;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
@@ -22,6 +21,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public class SpeedRunners
 {
 	public static final String MOD_ID = "speedrunners";
+	private static TeamManager teamManager;
+    private static MinecraftServer server;
 
     public SpeedRunners() {
     	IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -34,18 +35,18 @@ public class SpeedRunners
     }
 
     @SubscribeEvent
-    public void setupServer(FMLServerStartedEvent event)
+    public void setupServerPre(FMLServerAboutToStartEvent event)
     {
-        if(SpeedRunnersConfig.INSTANCE.enabled.get()) {
-            TeamManager.initTeams(event.getServer());
-        }
+        server = event.getServer();
     }
 
     @SubscribeEvent
-    public void onEvent(RegisterCommandsEvent event) {
+    public void setupServer(FMLServerStartedEvent event)
+    {
         if(SpeedRunnersConfig.INSTANCE.enabled.get()) {
-            CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
-            SpeedRunnersCommand.register(dispatcher);
+            teamManager = new TeamManager(event.getServer());
+            ScoreboardManager.createScoreboard();
+//            GameHelper.setupBorder(event.getServer());
         }
     }
 
@@ -57,4 +58,16 @@ public class SpeedRunners
     {
         throw new UnsupportedOperationException("This mod is not meant to be run on the client, please start this on a dedicated server.");
     }
+
+    public static MinecraftServer getServer()
+    {
+        return server;
+    }
+
+    public static TeamManager getTeamManager()
+    {
+        return teamManager;
+    }
+
+
 }

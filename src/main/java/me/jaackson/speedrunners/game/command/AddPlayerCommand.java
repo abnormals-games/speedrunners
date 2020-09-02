@@ -2,7 +2,6 @@ package me.jaackson.speedrunners.game.command;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.ArgumentBuilder;
-import me.jaackson.speedrunners.game.manager.TeamManager;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.ScoreHolderArgument;
@@ -10,7 +9,6 @@ import net.minecraft.command.arguments.TeamArgument;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.server.command.EnumArgument;
 
 import java.util.Collection;
 import java.util.Collections;
