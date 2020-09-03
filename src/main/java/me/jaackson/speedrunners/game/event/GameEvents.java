@@ -22,23 +22,18 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.List;
+import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = SpeedRunners.MOD_ID)
 public class GameEvents {
 
     @SubscribeEvent
     public static void onEvent(LivingDeathEvent event) {
-        LivingEntity entity = event.getEntityLiving();
-        if (entity instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) entity;
-            if (player.getTeam() == SpeedRunners.getTeamManager().getTeam(Teams.RUNNER) && player.interactionManager.getGameType().isSurvivalOrAdventure()) {
-                SpeedRunners.getTeamManager().setDead(player, true);
-            }
-        }
+
     }
 
     @SubscribeEvent
@@ -57,7 +52,7 @@ public class GameEvents {
     @SubscribeEvent
     public static void onEvent(TickEvent.ServerTickEvent event) {
         for (ServerPlayerEntity player : SpeedRunners.getServer().getPlayerList().getPlayers()) {
-            List<ItemStack> compasses = GameHelper.getCompasses(player);
+            Set<ItemStack> compasses = GameHelper.getCompasses(player);
             Team team = player.getTeam();
             TeamManager tm = SpeedRunners.getTeamManager();
 
@@ -75,9 +70,12 @@ public class GameEvents {
                 PlayerEntity nearestPlayer = GameHelper.getNearestRunner(player);
 
                 for (ItemStack stack : compasses) {
-                    if (!GameHelper.isHunterCompass(stack)) {
-                        GameHelper.createHunterCompass(stack);
-                        player.playSound(SoundEvents.ITEM_LODESTONE_COMPASS_LOCK, SoundCategory.PLAYERS, 0.8F, 0.8F + player.world.rand.nextFloat() * 0.4F);
+                    if (!GameHelper.isHunterCompass(stack) && stack.getTag() == null) {
+                        GameHelper.createHunterCompass(player, stack);
+                    }
+
+                    if (stack.getTag() != null && GameHelper.isHunterCompass(stack) && stack.getTag().getBoolean("LodestoneTracked")) {
+                        GameHelper.clearHunterCompass(stack);
                     }
                 }
 
@@ -110,6 +108,20 @@ public class GameEvents {
         if (GameHelper.isHunterCompass(stack)) {
             GameHelper.clearHunterCompass(stack);
             event.getEntityItem().playSound(SoundEvents.ITEM_LODESTONE_COMPASS_LOCK, 0.8F, 0.2F);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEvent(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.isEndConquered())
+            return;
+
+        LivingEntity entity = event.getEntityLiving();
+        if (entity instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) entity;
+            if (player.getTeam() == SpeedRunners.getTeamManager().getTeam(Teams.RUNNER) && player.interactionManager.getGameType().isSurvivalOrAdventure()) {
+                SpeedRunners.getTeamManager().setDead(player, true);
+            }
         }
     }
 }

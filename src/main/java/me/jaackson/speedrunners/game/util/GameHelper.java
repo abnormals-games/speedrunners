@@ -11,6 +11,8 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.play.server.SWorldSpawnChangedPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -20,13 +22,19 @@ import net.minecraftforge.common.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GameHelper {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void createHunterCompass(ItemStack stack) {
+    public static void createHunterCompass(PlayerEntity player, ItemStack stack) {
+        setHunterCompassNbt(stack);
+        player.playSound(SoundEvents.ITEM_LODESTONE_COMPASS_LOCK, SoundCategory.PLAYERS, 0.8F, 0.8F + player.world.rand.nextFloat() * 0.4F);
+    }
+
+    public static void setHunterCompassNbt(ItemStack stack) {
         CompoundNBT nbt = stack.getOrCreateTag();
         ITextComponent name = new StringTextComponent(TextFormatting.RED + "Hunter's Compass");
 
@@ -53,18 +61,15 @@ public class GameHelper {
         return nbt != null && nbt.contains("HunterCompass") && nbt.getBoolean("HunterCompass");
     }
 
-    public static List<ItemStack> getCompasses(PlayerEntity player) {
-        List<ItemStack> compasses = new ArrayList<>();
-        for (ItemStack stack : player.inventory.mainInventory) {
-            if (stack.getItem() == Items.COMPASS) {
+    public static Set<ItemStack> getCompasses(PlayerEntity player) {
+        Set<ItemStack> compasses = new HashSet<>();
+        for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
+            ItemStack stack = player.inventory.getStackInSlot(i);
+            if (!stack.isEmpty() && stack.getItem() == Items.COMPASS) {
                 compasses.add(stack);
             }
         }
-        for (ItemStack stack : player.inventory.offHandInventory) {
-            if (stack.getItem() == Items.COMPASS) {
-                compasses.add(stack);
-            }
-        }
+
         return compasses;
     }
 
