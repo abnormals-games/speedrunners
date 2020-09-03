@@ -3,57 +3,82 @@ package me.jaackson.speedrunners.game.util;
 import me.jaackson.speedrunners.SpeedRunners;
 import me.jaackson.speedrunners.SpeedRunnersConfig;
 import me.jaackson.speedrunners.game.manager.team.Teams;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.play.server.SWorldSpawnChangedPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.jmx.Server;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GameHelper {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static boolean isHunterCompass(ItemStack stack) {
-        return stack.getTag() != null && stack.getTag().contains("IsHunterCompass") & stack.getTag().getBoolean("IsHunterCompass");
+    public static void createHunterCompass(ItemStack stack) {
+        CompoundNBT nbt = stack.getOrCreateTag();
+        ITextComponent name = new StringTextComponent(TextFormatting.RED + "Hunter's Compass");
+
+        if (!stack.isEnchanted())
+            stack.addEnchantment(Enchantments.UNBREAKING, 1);
+
+        if (stack.getDisplayName() != name)
+            stack.setDisplayName(name);
+
+        if (!nbt.contains("HideFlags", Constants.NBT.TAG_BYTE)) nbt.putByte("HideFlags", (byte) 1);
+        if (!nbt.contains("HunterCompass")) nbt.putBoolean("HunterCompass", true);
     }
 
-    public static ItemStack getHunterCompass(PlayerEntity player) {
+    public static void clearHunterCompass(ItemStack stack) {
+        stack.setDisplayName(null);
+        stack.removeChildTag("Enchantments");
+        stack.removeChildTag("StoredEnchantments");
+        stack.removeChildTag("HideFlags");
+        stack.removeChildTag("HunterCompass");
+    }
+
+    public static boolean isHunterCompass(ItemStack stack) {
+        CompoundNBT nbt = stack.getTag();
+        return nbt != null && nbt.contains("HunterCompass") && nbt.getBoolean("HunterCompass");
+    }
+
+    public static List<ItemStack> getCompasses(PlayerEntity player) {
+        List<ItemStack> compasses = new ArrayList<>();
         for (ItemStack stack : player.inventory.mainInventory) {
-            if (isHunterCompass(stack)) {
-                return stack;
+            if (stack.getItem() == Items.COMPASS) {
+                compasses.add(stack);
             }
         }
         for (ItemStack stack : player.inventory.offHandInventory) {
-            if (isHunterCompass(stack)) {
-                return stack;
+            if (stack.getItem() == Items.COMPASS) {
+                compasses.add(stack);
             }
         }
-        return null;
+        return compasses;
     }
 
     public static void setCompassPos(ServerPlayerEntity player, BlockPos pos) {
         player.connection.sendPacket(new SWorldSpawnChangedPacket(pos));
-//        if (pos != null)
-//            nbt.put("LodestonePos", NBTUtil.writeBlockPos(pos));
-//        else
-//            nbt.remove("LodestonePos");
-//
-//        if (dimensionType != null)
-//            World.CODEC.encodeStart(NBTDynamicOps.INSTANCE, dimensionType).resultOrPartial(LOGGER::error).ifPresent((dimension) -> nbt.put("LodestoneDimension", dimension));
-//        else
-//            nbt.remove("LodestoneDimension");
-//
-//        nbt.putBoolean("LodestoneTracked", nbt.contains("LodestonePos") && nbt.contains("LodestoneDimension"));
+    }
+
+    public static void makeCompassGoBatshitCrazy(ServerPlayerEntity player) {
+        float angle = (float) (Math.random() * Math.PI * 2);
+        float dx = (float) (Math.cos(angle) * 5);
+        float dz = (float) (Math.sin(angle) * 5);
+
+        BlockPos randPos = new BlockPos(dx, 0, dz);
+        player.connection.sendPacket(new SWorldSpawnChangedPacket(player.getPosition().add(randPos)));
     }
 
     public static PlayerEntity getNearestRunner(PlayerEntity player) {
