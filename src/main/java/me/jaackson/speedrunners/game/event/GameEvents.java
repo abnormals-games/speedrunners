@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.STitlePacket;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -73,7 +74,12 @@ public class GameEvents {
             if (team == tm.getTeam(Teams.HUNTER)) {
                 PlayerEntity nearestPlayer = GameHelper.getNearestRunner(player);
 
-                for (ItemStack stack : compasses) GameHelper.createHunterCompass(stack);
+                for (ItemStack stack : compasses) {
+                    if (!GameHelper.isHunterCompass(stack)) {
+                        GameHelper.createHunterCompass(stack);
+                        player.playSound(SoundEvents.ITEM_LODESTONE_COMPASS_LOCK, SoundCategory.PLAYERS, 0.8F, 0.8F + player.world.rand.nextFloat() * 0.4F);
+                    }
+                }
 
                 if (nearestPlayer != null) {
                     ITextComponent tracking = new StringTextComponent(TextFormatting.BOLD + "TRACKING ").mergeStyle(TextFormatting.RED).append(new StringTextComponent("" + TextFormatting.RESET)).append(nearestPlayer.getDisplayName());
@@ -82,7 +88,12 @@ public class GameEvents {
 
                 } else GameHelper.makeCompassGoBatshitCrazy(player);
             } else {
-                for (ItemStack stack : compasses) GameHelper.clearHunterCompass(stack);
+                for (ItemStack stack : compasses) {
+                    if (GameHelper.isHunterCompass(stack)) {
+                        GameHelper.clearHunterCompass(stack);
+                        player.playSound(SoundEvents.ITEM_LODESTONE_COMPASS_LOCK, SoundCategory.PLAYERS, 0.8F, 0.2F);
+                    }
+                }
                 GameHelper.setCompassPos(player,
                         new BlockPos(
                                 player.world.getWorldInfo().getSpawnX(),
@@ -98,7 +109,7 @@ public class GameEvents {
         ItemStack stack = event.getEntityItem().getItem();
         if (GameHelper.isHunterCompass(stack)) {
             GameHelper.clearHunterCompass(stack);
-            event.getEntityItem().playSound(SoundEvents.ENTITY_ITEM_BREAK, 0.8F, 0.8F + event.getEntityItem().world.rand.nextFloat() * 0.4F);
+            event.getEntityItem().playSound(SoundEvents.ITEM_LODESTONE_COMPASS_LOCK, 0.8F, 0.2F);
         }
     }
 }
