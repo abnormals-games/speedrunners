@@ -84,10 +84,13 @@ public final class SpeedrunnersGame {
 		this.setRunning(false);
 		this.setPhase(Phase.WAITING);
 
-		this.getServer().getGameRules().get(GameRules.DO_IMMEDIATE_RESPAWN).set(true, this.getServer());
+		server.getGameRules().get(GameRules.DO_IMMEDIATE_RESPAWN).set(true, server);
+		server.getGameRules().get(GameRules.DO_DAYLIGHT_CYCLE).set(false, server);
 
 		if(world == null)
 			return;
+
+		world.func_241114_a_(6000);
 
 		BlockPos pos = new BlockPos(world.getSpawnPoint().getX(), world.getSpawnPoint().getY(), world.getSpawnPoint().getZ());
 		world.func_241124_a__(pos);
@@ -102,6 +105,8 @@ public final class SpeedrunnersGame {
 		MinecraftServer server = this.getServer();
 		ServerWorld world = server.getWorld(World.OVERWORLD);
 		TeamManager tm = this.getTeamManager();
+
+		server.getGameRules().get(GameRules.DO_DAYLIGHT_CYCLE).set(true, server);
 
 		if(world == null || !tm.getSpeedrunners().findAny().isPresent() || !tm.getHunters().findAny().isPresent())
 			return;
