@@ -1,7 +1,9 @@
 package me.jaackson.speedrunners;
 
 import me.jaackson.speedrunners.game.SpeedrunnersGame;
+import me.jaackson.speedrunners.game.command.SpeedrunnerCommand;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,5 +28,10 @@ public class Speedrunners {
     @SubscribeEvent
     public void setupServer(FMLServerStartedEvent event) {
 		new SpeedrunnersGame(event.getServer());
+	}
+
+	@SubscribeEvent
+	public void registerCommands(RegisterCommandsEvent event) {
+		SpeedrunnerCommand.register(event.getDispatcher());
 	}
 }

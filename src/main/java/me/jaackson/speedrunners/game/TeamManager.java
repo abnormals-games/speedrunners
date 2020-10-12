@@ -43,32 +43,26 @@ public final class TeamManager {
 
 	public void setRole(ServerPlayerEntity player, Role role) {
 		this.roleSet.put(player.getUniqueID(), role);
+		player.refreshDisplayName();
 	}
 
-	enum Role {
-		HUNTER(TextFormatting.RED, GameType.SURVIVAL),
-		SPEEDRUNNER(TextFormatting.AQUA, GameType.SURVIVAL),
-		SPECTATOR(TextFormatting.GRAY, GameType.SPECTATOR);
+	public enum Role {
+		HUNTER(TextFormatting.RED),
+		SPEEDRUNNER(TextFormatting.AQUA),
+		SPECTATOR(TextFormatting.GRAY);
 
 		private final int color;
-		private final GameType mode;
 
-		Role(TextFormatting color, GameType mode) {
+		Role(TextFormatting color) {
 			this.color = color.getColor() != null ? color.getColor() : 0;
-			this.mode = mode;
 		}
 
-		Role(int color, GameType mode) {
+		Role(int color) {
 			this.color = color;
-			this.mode = mode;
 		}
 
 		public int getColor() {
 			return this.color;
-		}
-
-		public GameType getMode() {
-			return this.mode;
 		}
 	}
 }

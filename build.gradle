@@ -47,7 +47,7 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${project.minecraft}-${project.forge}"
 
-    implementation fg.deobf("curse.maven:seekers-compass:3075917")
+    implementation fg.deobf("curse.maven:seekers-compass:3076210")
 }
 
 processResources {
