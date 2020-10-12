@@ -1,8 +1,12 @@
 package me.jaackson.speedrunners.game;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.jaackson.speedrunners.game.util.GameUtil;
+import me.jaackson.speedrunners.game.util.Scheduler;
 import net.minecraft.network.play.server.STitlePacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -15,18 +19,25 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.IWorldInfo;
 
 import java.util.Objects;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public final class SpeedrunnersGame {
 	private static SpeedrunnersGame instance;
 	private final MinecraftServer server;
 	private final TeamManager teamManager;
+	private final Scheduler scheduler;
 
 	private boolean running;
 	private Phase phase;
+	private ScheduledFuture<?> countdown;
+	private ScheduledFuture<?> countdownMessages;
 
 	public SpeedrunnersGame(MinecraftServer server) {
 		this.server = server;
-		this.teamManager = new TeamManager();
+		this.teamManager = new TeamManager(server);
+		this.scheduler = new Scheduler(server);
+
 		this.phase = Phase.WAITING;
 
 		this.setup();
@@ -46,6 +57,10 @@ public final class SpeedrunnersGame {
 		return teamManager;
 	}
 
+	public Scheduler getScheduler() {
+		return scheduler;
+	}
+
 	public boolean isRunning() {
 		return running;
 	}
@@ -63,7 +78,8 @@ public final class SpeedrunnersGame {
 	}
 
 	private void setup() {
-		ServerWorld world = this.getServer().getWorld(World.OVERWORLD);
+		MinecraftServer server = this.getServer();
+		ServerWorld world = server.getWorld(World.OVERWORLD);
 
 		this.setRunning(false);
 		this.setPhase(Phase.WAITING);
@@ -76,44 +92,46 @@ public final class SpeedrunnersGame {
 		BlockPos pos = new BlockPos(world.getSpawnPoint().getX(), world.getSpawnPoint().getY(), world.getSpawnPoint().getZ());
 		world.func_241124_a__(pos);
 		world.getWorldBorder().setCenter(pos.getX(), pos.getZ());
-		world.getWorldBorder().setTransition(15);
+		world.getWorldBorder().setTransition(16);
 		world.getWorldBorder().setWarningDistance(0);
 
-		server.getPlayerList().getPlayers().forEach(player -> {
-			player.func_241153_a_(world.getDimensionKey(), pos, true, false);
-		});
+		server.getPlayerList().getPlayers().forEach(GameUtil::resetPlayer);
 	}
 
 	public void start() {
 		MinecraftServer server = this.getServer();
 		ServerWorld world = server.getWorld(World.OVERWORLD);
+		TeamManager tm = this.getTeamManager();
 
-		if(world == null)
+		if(world == null || !tm.getSpeedrunners().findAny().isPresent() || !tm.getHunters().findAny().isPresent())
 			return;
 
-		IWorldInfo info = world.getWorldInfo();
-		world.getWorldBorder().setTransition(world.getWorldBorder().getSize(), 50000, 30 * 1000L);
-
-		server.getPlayerList().getPlayers().forEach(player -> {
-			player.inventory.func_234564_a_(predicate -> true, -1, player.container.func_234641_j_());
-			player.openContainer.detectAndSendChanges();
-			player.container.onCraftMatrixChanged(player.inventory);
-			player.updateHeldItem();
-
-			player.connection.setPlayerLocation(info.getSpawnX(), info.getSpawnY(), info.getSpawnZ(), 0, 90);
-		});
-
-		server.sendMessage(new StringTextComponent("Game has started!"), Util.DUMMY_UUID);
+		world.getWorldBorder().setTransition(50000);
+		server.getPlayerList().getPlayers().forEach(GameUtil::resetPlayer);
 
 		this.setRunning(true);
 		this.setPhase(Phase.STARTING);
-		EventListener.timer = 400;
+
+		this.countdown = this.getScheduler().schedule(() -> {
+			this.setPhase(Phase.STARTED);
+			this.countdown = null;
+
+			if(this.countdownMessages != null) {
+				this.countdownMessages.cancel(false);
+				this.countdownMessages = null;
+			}
+		}, this.getTeamManager().getHunters().count() * 5, TimeUnit.SECONDS);
+
+		this.countdownMessages = this.getScheduler().scheduleAtFixedRate(() -> server.getPlayerList().getPlayers().forEach(player -> player.sendMessage(new StringTextComponent("Starting in " + this.countdown.getDelay(TimeUnit.SECONDS) + " seconds!"), Util.DUMMY_UUID)), 0, 5, TimeUnit.SECONDS);
 	}
 
 	public void stop() {
 		MinecraftServer server = this.getServer();
+		ServerWorld world = server.getWorld(World.OVERWORLD);
 		TeamManager tm = this.getTeamManager();
-		ITextComponent winningMessage = new StringTextComponent(TextFormatting.GOLD + "" + TextFormatting.BOLD + "WINNERS: " + TextFormatting.RESET + "" + (tm.getSpeedrunners().findAny().isPresent() ? TextFormatting.AQUA + "Speedrunners" : TextFormatting.RED + "Hunters"));
+
+		boolean speedrunnersWin = tm.getSpeedrunners().findAny().isPresent();
+		ITextComponent winningMessage = new StringTextComponent(TextFormatting.GOLD + "" + TextFormatting.BOLD + "WINNERS: " + TextFormatting.RESET + "" + (speedrunnersWin ? TextFormatting.AQUA + "Speedrunners" : TextFormatting.RED + "Hunters"));
 
 		server.getPlayerList().getPlayers().forEach(player -> {
 			try {
@@ -121,10 +139,16 @@ public final class SpeedrunnersGame {
 			} catch (CommandSyntaxException ignored) {}
 		});
 
+
 		this.setRunning(false);
 		this.setPhase(Phase.ENDING);
 
 		setup();
+
+		if(world != null) {
+			BlockPos pos = new BlockPos(world.getWorldInfo().getSpawnX(), world.getWorldInfo().getSpawnY(), world.getWorldInfo().getSpawnZ());
+			world.playSound(null, pos, (speedrunnersWin ? SoundEvents.UI_TOAST_CHALLENGE_COMPLETE : SoundEvents.ENTITY_ENDER_DRAGON_DEATH), SoundCategory.AMBIENT, 1.0F, 1.0F);
+		}
 	}
 
 	public enum Phase {

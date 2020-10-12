@@ -8,6 +8,7 @@ import me.jaackson.speedrunners.game.TeamManager;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.server.command.EnumArgument;
 
 import java.util.Collections;
@@ -22,6 +23,7 @@ public class SpeedrunnerCommand {
 								.then(Commands.argument("role", EnumArgument.enumArgument(TeamManager.Role.class))
 										.executes(context -> {
 											EntityArgument.getPlayers(context, "players").forEach(player -> SpeedrunnersGame.getInstance().getTeamManager().setRole(player, context.getArgument("role", TeamManager.Role.class)));
+											context.getSource().sendFeedback(new StringTextComponent("Added " + EntityArgument.getPlayers(context, "players").size() + " to the team '" + context.getArgument("role", TeamManager.Role.class).toString() + "'"), true);
 											return Command.SINGLE_SUCCESS;
 										}))))
 				.then(Commands.literal("start").executes(context -> {
