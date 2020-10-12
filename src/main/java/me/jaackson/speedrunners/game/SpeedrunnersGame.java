@@ -120,7 +120,7 @@ public final class SpeedrunnersGame {
 				this.countdownMessages.cancel(false);
 				this.countdownMessages = null;
 			}
-		}, this.getTeamManager().getHunters().count() * 5, TimeUnit.SECONDS);
+		}, 30, TimeUnit.SECONDS);
 
 		this.countdownMessages = this.getScheduler().scheduleAtFixedRate(() -> server.getPlayerList().getPlayers().forEach(player -> player.sendMessage(new StringTextComponent("Starting in " + this.countdown.getDelay(TimeUnit.SECONDS) + " seconds!"), Util.DUMMY_UUID)), 0, 5, TimeUnit.SECONDS);
 	}
