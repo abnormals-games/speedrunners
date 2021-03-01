@@ -1,9 +1,10 @@
 modLoader="javafml"
 loaderVersion="[32,)"
+license="ARR"
 #issueTrackerURL=""
 [[mods]]
-modId="${modId}"
-version="${modVersion}"
+modId="speedrunners"
+version="{$file.jarVersion}"
 displayName="Speedrunners"
 authors="Jackson, bageldotjpg"
 #updateJSONURL=""
@@ -14,15 +15,15 @@ A recreation of Dream's Minecraft Man Hunt/Assassin using MinecraftForge
 '''
 
 [[dependencies.speedrunners]]
-modId = "forge"
-mandatory = true
-versionRange = "[32,)"
-ordering = "NONE"
-side = "BOTH"
+    modId = "forge"
+    mandatory = true
+    versionRange = "[34.1.64,)"
+    ordering = "NONE"
+    side = "BOTH"
 
 [[dependencies.speedrunners]]
-modId = "minecraft"
-mandatory = true
-versionRange = "[1.16.1]"
-ordering = "NONE"
-side = "BOTH"
+    modId = "minecraft"
+    mandatory = true
+    versionRange = "[1.16.3,1.17)"
+    ordering = "NONE"
+    side = "BOTH"

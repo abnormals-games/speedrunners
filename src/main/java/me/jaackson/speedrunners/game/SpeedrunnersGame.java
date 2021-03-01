@@ -90,10 +90,10 @@ public final class SpeedrunnersGame {
 		if(world == null)
 			return;
 
-		world.func_241114_a_(6000);
+		world.setDayTime(6000);
 
 		BlockPos pos = new BlockPos(world.getSpawnPoint().getX(), world.getSpawnPoint().getY(), world.getSpawnPoint().getZ());
-		world.func_241124_a__(pos);
+		world.func_241124_a__(pos, 0.0F);
 		world.getWorldBorder().setCenter(pos.getX(), pos.getZ());
 		world.getWorldBorder().setTransition(16);
 		world.getWorldBorder().setWarningDistance(0);

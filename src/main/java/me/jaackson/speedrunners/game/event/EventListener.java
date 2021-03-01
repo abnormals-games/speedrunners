@@ -1,7 +1,6 @@
 package me.jaackson.speedrunners.game.event;
 
 import me.jaackson.speedrunners.Speedrunners;
-import me.jaackson.speedrunners.compat.SeekerCompassCompat;
 import me.jaackson.speedrunners.game.SpeedrunnersGame;
 import me.jaackson.speedrunners.game.TeamManager;
 import me.jaackson.speedrunners.game.util.GameUtil;
@@ -10,6 +9,7 @@ import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -90,18 +90,17 @@ public class EventListener {
 				hunter.addPotionEffect(new EffectInstance(Effects.BLINDNESS, 40, 255, false, false));
 				hunter.connection.setPlayerLocation(hunter.getPosX(), hunter.getPosY(), hunter.getPosZ(), 0, 0);
 			}
-
-			// Seeker Compass Compat
-			if (SeekerCompassCompat.isSeekerEnabled()) {
-
-				//TODO: Prevent compass duplication
-				if (SeekerCompassCompat.getCompasses(hunter).isEmpty())
-					hunter.inventory.addItemStackToInventory(SeekerCompassCompat.createCompass());
-				else if (target == null)
-					SeekerCompassCompat.getCompasses(hunter).forEach(stack -> stack.getOrCreateTag().remove("TrackingEntity"));
-				else
-					SeekerCompassCompat.getCompasses(hunter).forEach(stack -> stack.getOrCreateTag().put("TrackingEntity", NBTUtil.func_240626_a_(target.getUniqueID())));
+			//TODO: Prevent compass duplication
+			if (GameUtil.getCompasses(hunter).isEmpty()) {
+				ItemStack compass = new ItemStack(Items.COMPASS);
+				GameUtil.createHunterCompass(hunter, compass);
+				hunter.inventory.addItemStackToInventory(compass);
 			}
+			else if (target != null)
+//				GameUtil.getCompasses(hunter).forEach(GameUtil::clearHunterCompass);
+//			else
+				GameUtil.getCompasses(hunter).forEach(stack -> GameUtil.setCompassPos(hunter, target.getPosition()));
+
 
 			hunter.sendStatusMessage(new StringTextComponent(TextFormatting.RED + "" + TextFormatting.BOLD + "TRACKING: " + TextFormatting.RESET).append(target == null ? new StringTextComponent("No-one") : target.getDisplayName()), true);
 		});
@@ -124,7 +123,7 @@ public class EventListener {
 	public static void onEvent(LivingDropsEvent event) {
 		event.getDrops().removeIf(itemEntity -> {
 			try {
-				return itemEntity.getItem().getTag() != null && itemEntity.getItem().getTag().getBoolean("Hunter");
+				return itemEntity.getItem().getTag() != null && itemEntity.getItem().getTag().getBoolean("HunterCompass");
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
@@ -135,11 +134,10 @@ public class EventListener {
 	@SubscribeEvent
 	public static void onEvent(ItemTossEvent event) {
 		ItemStack stack = event.getEntityItem().getItem();
-		if (SeekerCompassCompat.isSeekerEnabled()) {
-			if (SeekerCompassCompat.isHuntingSeekerCompass(stack)) {
-				event.getEntityItem().remove();
-			}
+		if (GameUtil.isHunterCompass(stack)) {
+			event.getEntityItem().remove();
 		}
+
 	}
 
 	/*
